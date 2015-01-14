@@ -2,9 +2,9 @@
 
 /*
 0~8:speed,9:stop,0~3:backword,4~8:forward
-                i:forward
-j:trun left     k:back        l:trun right
-*/
+ i:forward
+ j:trun left     k:back        l:trun right
+ */
 #include <SoftwareSerial.h>
 SoftwareSerial bluetooth(9,8); //RX,TX
 const int fbBT=1;
@@ -24,7 +24,8 @@ int dirByte=0xff;
 const int minSpeed=-4;
 const int maxSpeed=4;
 int estSpeed=0;//estimate speed(1~8)
-unsigned long time=0;
+unsigned long tDrive=0,tBlueTooth=0;
+int flag=0,recvB=0;
 void setup () 
 {
 
@@ -45,37 +46,17 @@ void setup ()
 
   bluetooth.begin(9600);
 
-  time=micros();
+  tDrive=tBlueTooth=micros();
 } 
 
 void loop () 
 {
-
-  int flag=0;
-  int recvB = 0;
-
-  if(analogRead(fbBT)<700 && true){
-     if(Serial.available()>0){
-       recvB=Serial.read();
-       flag=1;
-     }
-  }
-  else{
-     if(bluetooth.available()>0){
-    recvB=bluetooth.read();
-    //                                                                                                                                                                                                                                                                                                                                                                    Serial.write(recvB);
-    flag=1;
-  }
- }
-
-
-
-
+  readBlueTooth();
   if(flag==1){
     if(recvB>='0' && recvB<='9'){
       estSpeed=recvB=='9'?0xff:recvB-'4';
-        for(int i=0;i<4;i++){
-          speedUp(i,estSpeed);
+      for(int i=0;i<4;i++){
+        speedUp(i,estSpeed);
       }      
     }
     else if(recvB=='i'){
@@ -101,16 +82,34 @@ void loop ()
         speedUp(i,-1);
       }
     }   
-    
-
+    flag=0;
   }
-
-
-  //set speed
-  //analogWrite (speedPins[0], 255-speed[0]); 
-  //analogWrite (speedPins[1], 255-speed[1]); 
   drive();
 }
+
+void readBlueTooth(){
+  if(flag==1 || micros()-tBlueTooth<1000){
+    return;
+  }
+  else{
+    tBlueTooth = micros();
+  }
+
+  if(analogRead(fbBT)<700 && true){
+    if(Serial.available()>0){
+      recvB=Serial.read();
+      flag=1;
+    }
+  }
+  else{
+    if(bluetooth.available()>0){
+      recvB=bluetooth.read();                                                                                                                                                                                                                                                                                                                                                                  
+      Serial.write(recvB);
+      flag=1;
+    }
+  }
+}
+
 
 void speedUp(int i,int level){
   if(level==0xff){
@@ -126,18 +125,12 @@ void turnDir(int index,int dir){
   int dirBitA=1<<offset;
   int dirBitB=dirBitA<<1;
 
-  // set direction
   if (1 == dir) 
   {
     dirByte=dirByte & (~dirBitA) | dirBitB;
     digitalWrite(LCK,LOW);
     shiftOut(DAT, CLK, MSBFIRST, dirByte);
     digitalWrite(LCK,HIGH);
-    Serial.println(dirByte);
-    /* 
-     digitalWrite (dir1PinA , LOW); 
-     digitalWrite (dir2PinA, HIGH); 
-     */
   } 
   else if(dir==-1)
   {
@@ -146,19 +139,9 @@ void turnDir(int index,int dir){
     digitalWrite(LCK,LOW);
     shiftOut(DAT, CLK, MSBFIRST, dirByte);
     digitalWrite(LCK,HIGH);
-    Serial.println(dirByte);
-    /* 
-     digitalWrite (dir1PinA , HIGH); 
-     digitalWrite (dir2PinA, LOW); 
-     */
   } 
   else if(dir==0){
     dirByte=dirByte | dirBitA | dirBitB;
-    Serial.println(dirByte);
-    /*
-  digitalWrite (dir1PinA, HIGH); 
-     digitalWrite (dir2PinA, HIGH); 
-     */
     digitalWrite(LCK,LOW);
     shiftOut(DAT, CLK, MSBFIRST, dirByte);
     digitalWrite(LCK,HIGH);
@@ -169,19 +152,17 @@ void turnDir(int index,int dir){
 
 int s=0;
 void drive(){
-  //for(int s=0;s<255;s++){
-
-    if(micros()-time<30){
-      return;
-    }
-    else{
-      time=micros();
-      s=(s+1)&0xff;
-    }
-    for(int idx=0;idx<4;idx++){
-      digitalWrite( speedPins[idx],s < 255-speed[idx]?HIGH:LOW);
-    }
-    //delayMicroseconds(30);
-  //}
+  if(micros()-tDrive<30){
+    return;
+  }
+  else{
+    tDrive=micros();
+    s=(s+1)&0xff;
+  }
+  for(int idx=0;idx<4;idx++){
+    digitalWrite( speedPins[idx],s < 255-speed[idx]?HIGH:LOW);
+  }
 }
+
+
 
