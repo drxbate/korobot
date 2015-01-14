@@ -15,8 +15,7 @@ const int _step=32;
 const int DAT = 7;
 const int LCK = 6;
 const int CLK = 5;
-int speedPins[] = {
-  13,12,11,10};
+int speedPins[] = {13,12,11,10};
 int speed[]={
   0,0,0,0}; 
 int dirByte=0xff;
@@ -24,7 +23,7 @@ int dirByte=0xff;
 const int minSpeed=-4;
 const int maxSpeed=4;
 int estSpeed=0;//estimate speed(1~8)
-unsigned long tDrive=0,tBlueTooth=0;
+unsigned long tDrive[]={0,0,0,0},tBlueTooth=0;
 int flag=0,recvB=0;
 void setup () 
 {
@@ -35,18 +34,12 @@ void setup ()
   pinMode(DAT,OUTPUT);
   pinMode(LCK,OUTPUT);
   pinMode(CLK,OUTPUT);
-  //pinMode(POW,OUTPUT);
-  //digitalWrite(POW,power);  
-
+  
   Serial.begin(9600);
-  /*
-  for(int i=0;i<4;i++){
-   turnDir(i,0);
-   }*/
 
   bluetooth.begin(9600);
 
-  tDrive=tBlueTooth=micros();
+  //tDrive=tBlueTooth=micros();
 } 
 
 void loop () 
@@ -88,11 +81,12 @@ void loop ()
 }
 
 void readBlueTooth(){
-  if(flag==1 || micros()-tBlueTooth<1000){
+  int tmpT = micros();
+  if(flag==1 || tmpT-tBlueTooth<7680){
     return;
   }
   else{
-    tBlueTooth = micros();
+    tBlueTooth = tmpT;
   }
 
   if(analogRead(fbBT)<700 && true){
@@ -150,17 +144,20 @@ void turnDir(int index,int dir){
 }
 
 
-int s=0;
+int s[]={0,0,0,0};
 void drive(){
-  if(micros()-tDrive<30){
-    return;
-  }
-  else{
-    tDrive=micros();
-    s=(s+1)&0xff;
-  }
   for(int idx=0;idx<4;idx++){
-    digitalWrite( speedPins[idx],s < 255-speed[idx]?HIGH:LOW);
+    int tmpT = micros();
+    if(tmpT-tDrive[idx]<30){
+      continue;
+    }
+    else{
+      tDrive[idx]=tmpT;
+      digitalWrite( speedPins[idx],s[idx] < 255-speed[idx]?HIGH:LOW);
+      s[idx]=(s[idx]+1)&0xff;
+    }
+
+
   }
 }
 
