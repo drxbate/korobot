@@ -15,15 +15,13 @@ const int _step=32;
 const int DAT = 7;
 const int LCK = 6;
 const int CLK = 5;
-int speedPins[] = {
-  13,12,11,10};
-int speed[]={
-  0,0,0,0}; 
+int speedPins[] = {13,12,11,10};
+int speed[]={0,0,0,0}; 
 int dirByte=0xff;
 
 const int minSpeed=-4;
 const int maxSpeed=4;
-int estSpeed=0;//estimate speed(1~8)
+int estSpeed=0,estDirect=1;//estimate speed(1~8)
 unsigned long tDrive=0,tBlueTooth=0;
 int flag=0,recvB=0;
 void setup () 
@@ -54,32 +52,34 @@ void loop ()
   readBlueTooth();
   if(flag==1){
     if(recvB>='0' && recvB<='9'){
-      estSpeed=recvB=='9'?0xff:recvB-'4';
+      estSpeed=recvB=='0'?0xff:recvB-'0';
       for(int i=0;i<4;i++){
         speedUp(i,estSpeed);
       }      
     }
     else if(recvB=='i'){
-      estSpeed=estSpeed==0xff?1:estSpeed;
+      estDirect = 1;
       for(int i=0;i<4;i++){
-        speedUp(i,estSpeed);
+        turnDir(i,1);
       }      
     }
     else if(recvB=='l'){
-      speedUp(0,estSpeed+1);
-      speedUp(1,estSpeed+1);
-      speedUp(2,estSpeed-1);      
-      speedUp(3,estSpeed-1);      
+      speedUp(0,estSpeed-5);
+      speedUp(1,estSpeed-5);
+      speedUp(2,estSpeed+5);      
+      speedUp(3,estSpeed+5);      
     }
-    else if(recvB=='j'){            
-      speedUp(0,estSpeed-1);
-      speedUp(1,estSpeed-1);
-      speedUp(2,estSpeed+1);      
-      speedUp(3,estSpeed+1);      
+    else if(recvB=='j'){
+      speedUp(0,estSpeed+5);
+      speedUp(1,estSpeed+5);
+      speedUp(2,estSpeed-5);      
+      speedUp(3,estSpeed-5);      
     }
     else if(recvB=='k'){ 
+      
+      estDirect = -1;
       for(int i=0;i<4;i++){
-        speedUp(i,-1);
+        turnDir(i,-1);
       }
     }   
     flag=0;
@@ -116,8 +116,8 @@ void speedUp(int i,int level){
     turnDir(i,0);
     return;
   }
-  speed[i] = level>0?144-level*32:144+level*32;
-  turnDir(i,level>=0?1:-1);
+  speed[i] = 255 -(144-(level<=0?0:level>9?9:level)*16);
+
 }
 
 void turnDir(int index,int dir){
@@ -125,14 +125,14 @@ void turnDir(int index,int dir){
   int dirBitA=1<<offset;
   int dirBitB=dirBitA<<1;
 
-  if (1 == dir) 
+  if (dir==-1) 
   {
     dirByte=dirByte & (~dirBitA) | dirBitB;
     digitalWrite(LCK,LOW);
     shiftOut(DAT, CLK, MSBFIRST, dirByte);
     digitalWrite(LCK,HIGH);
   } 
-  else if(dir==-1)
+  else if(dir==1)
   {
 
     dirByte=(dirByte | dirBitA) & (~dirBitB);
@@ -160,7 +160,7 @@ void drive(){
     s=(s+1)&0xff;
   }
   for(int idx=0;idx<4;idx++){
-    digitalWrite( speedPins[idx],s < 255-speed[idx]?HIGH:LOW);
+    digitalWrite( speedPins[idx],s < speed[idx]?HIGH:LOW);
   }
 }
 
