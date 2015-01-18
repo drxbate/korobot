@@ -59,16 +59,16 @@ void loop ()
       }      
     }
     else if(recvB=='l'){
-      speedUp(0,estSpeed+2);
-      speedUp(1,estSpeed+2);
-      speedUp(2,estSpeed-2);      
-      speedUp(3,estSpeed-2);      
+      speedUp(0,estSpeed+1);
+      speedUp(1,estSpeed+1);
+      speedUp(2,estSpeed-1);      
+      speedUp(3,estSpeed-1);      
     }
     else if(recvB=='j'){            
-      speedUp(0,estSpeed-2);
-      speedUp(1,estSpeed-2);
-      speedUp(2,estSpeed+2);      
-      speedUp(3,estSpeed+2);      
+      speedUp(0,estSpeed-1);
+      speedUp(1,estSpeed-1);
+      speedUp(2,estSpeed+1);      
+      speedUp(3,estSpeed+1);      
     }
     else if(recvB=='k'){ 
       for(int i=0;i<4;i++){
