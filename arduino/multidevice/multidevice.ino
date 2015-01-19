@@ -21,7 +21,7 @@ int dirByte=0xff;
 
 const int minSpeed=-4;
 const int maxSpeed=4;
-int estSpeed=0,estDirect=1;//estimate speed(1~8)
+int estSpeed=,estDirect=1;//estimate speed(1~8)
 unsigned long tDrive=0,tBlueTooth=0;
 int flag=0,recvB=0;
 void setup () 
@@ -52,7 +52,7 @@ void loop ()
   readBlueTooth();
   if(flag==1){
     if(recvB>='0' && recvB<='9'){
-      estSpeed=recvB=='0'?0xff:recvB-'0';
+      estSpeed=  recvB=='0'?0xff:recvB-'0';
       for(int i=0;i<4;i++){
         speedUp(i,estSpeed);
       }      
@@ -60,20 +60,21 @@ void loop ()
     else if(recvB=='i'){
       estDirect = 1;
       for(int i=0;i<4;i++){
+        speedUp(i,estSpeed);
         turnDir(i,1);
       }      
     }
     else if(recvB=='l'){
-      speedUp(0,estSpeed-5);
-      speedUp(1,estSpeed-5);
-      speedUp(2,estSpeed+5);      
-      speedUp(3,estSpeed+5);      
+      speedUp(0,estSpeed-8);
+      speedUp(1,estSpeed-8);
+      speedUp(2,estSpeed+8);      
+      speedUp(3,estSpeed+8);      
     }
     else if(recvB=='j'){
-      speedUp(0,estSpeed+5);
-      speedUp(1,estSpeed+5);
-      speedUp(2,estSpeed-5);      
-      speedUp(3,estSpeed-5);      
+      speedUp(0,estSpeed+8);
+      speedUp(1,estSpeed+8);
+      speedUp(2,estSpeed-8);      
+      speedUp(3,estSpeed-8);      
     }
     else if(recvB=='k'){ 
       
@@ -82,6 +83,18 @@ void loop ()
         turnDir(i,-1);
       }
     }   
+    else if(recvB=='u'){
+      turnDir(0,1);
+      turnDir(1,1);
+      turnDir(2,-1);
+      turnDir(3,-1);
+    }
+    else if(recvB=='o'){
+      turnDir(0,-1);
+      turnDir(1,-1);
+      turnDir(2,1);
+      turnDir(3,1);
+    }
     flag=0;
   }
   drive();
